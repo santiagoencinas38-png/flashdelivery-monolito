@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>FlashDelivery - Sistema Monolito</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-dark bg-primary mb-4">
+    <div class="container">
+      <span class="navbar-brand mb-0 h1">⚡ FlashDelivery Monolith CRUD</span>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="row g-4">
+      <!-- Formulario Restaurante -->
+      <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-dark text-white fw-bold">🏢 Registrar Restaurante</div>
+          <div class="card-body">
+            <form id="formRestaurante">
+              <input type="text" id="rest_id" class="form-control mb-2" placeholder="ID (ej: REST-01)" required>
+              <input type="text" id="rest_nombre" class="form-control mb-2" placeholder="Nombre Restaurante" required>
+              <input type="text" id="rest_esp" class="form-control mb-2" placeholder="Especialidades (ej: Pizza, Italiana)">
+              <button type="submit" class="btn btn-success w-100">Guardar Restaurante</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Tabla Restaurantes Registrados -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-success text-white fw-bold d-flex justify-content-between">
+            <span>🏢 Restaurantes Registrados</span>
+            <button onclick="cargarRestaurantes()" class="btn btn-sm btn-outline-light">Actualizar</button>
+          </div>
+          <div class="card-body">
+            <table class="table table-striped align-middle text-center">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Especialidades</th>
+                </tr>
+              </thead>
+              <tbody id="tablaRestaurantes"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario Cliente -->
+      <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-dark text-white fw-bold">👤 Registrar Cliente</div>
+          <div class="card-body">
+            <form id="formCliente">
+              <input type="text" id="cli_id" class="form-control mb-2" placeholder="DNI" required>
+              <input type="text" id="cli_nombre" class="form-control mb-2" placeholder="Nombre Completo" required>
+              <div class="row g-2 mb-2">
+                <div class="col-6"><input type="text" id="cli_calle" class="form-control" placeholder="Calle"></div>
+                <div class="col-3"><input type="text" id="cli_num" class="form-control" placeholder="N°"></div>
+                <div class="col-3"><input type="text" id="cli_zona" class="form-control" placeholder="Zona"></div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Guardar Cliente</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Tabla Clientes Registrados -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>👤 Clientes Registrados</span>
+            <button onclick="cargarClientes()" class="btn btn-sm btn-outline-light">Actualizar</button>
+          </div>
+          <div class="card-body">
+            <table class="table table-striped align-middle text-center">
+              <thead>
+                <tr>
+                  <th>DNI</th>
+                  <th>Nombre</th>
+                  <th>Zona</th>
+                </tr>
+              </thead>
+              <tbody id="tablaClientes"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    async function cargarRestaurantes() {
+      const res = await fetch('/api/restaurantes');
+      const data = await res.json();
+      const tbody = document.getElementById('tablaRestaurantes');
+      tbody.innerHTML = '';
+      data.forEach(r => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${r._id}</strong></td>
+            <td>${r.nombre}</td>
+            <td>${r.especialidades.join(', ')}</td>
+          </tr>
+        `;
+      });
+    }
+
+    async function cargarClientes() {
+      const res = await fetch('/api/clientes');
+      const data = await res.json();
+      const tbody = document.getElementById('tablaClientes');
+      tbody.innerHTML = '';
+      data.forEach(c => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${c._id}</strong></td>
+            <td>${c.nombre}</td>
+            <td>${c.direccion ? c.direccion.zona : '-'}</td>
+          </tr>
+        `;
+      });
+    }
+
+    document.getElementById('formRestaurante').onsubmit = async (e) => {
+      e.preventDefault();
+      const body = {
+        _id: document.getElementById('rest_id').value,
+        nombre: document.getElementById('rest_nombre').value,
+        especialidades: document.getElementById('rest_esp').value.split(',').map(s => s.trim()),
+        productos: []
+      };
+      await fetch('/api/restaurantes', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+      alert('Restaurante registrado con éxito');
+      e.target.reset();
+      cargarRestaurantes();
+    };
+
+    document.getElementById('formCliente').onsubmit = async (e) => {
+      e.preventDefault();
+      const body = {
+        _id: document.getElementById('cli_id').value,
+        nombre: document.getElementById('cli_nombre').value,
+        direccion: {
+          calle: document.getElementById('cli_calle').value,
+          numero: document.getElementById('cli_num').value,
+          zona: document.getElementById('cli_zona').value
+        }
+      };
+      await fetch('/api/clientes', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+      alert('Cliente registrado con éxito');
+      e.target.reset();
+      cargarClientes();
+    };
+
+    // Cargar listas al iniciar
+    cargarRestaurantes();
+    cargarClientes();
+  </script>
+</body>
+</html>
